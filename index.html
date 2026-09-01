@@ -1,30 +1,107 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>YISL AR VR Workshop</title>
+    <title>LIFEBRIDGE - 3D Exploration</title>
+    <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+    <!-- A-Frame Extras for movement controls (Thumbstick support) -->
+    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.0/dist/aframe-extras.min.js"></script>
+    
+    <script>
+        // Custom component for interactive nodes
+        AFRAME.registerComponent('interactive-node', {
+            schema: {
+                color: {default: '#e63946'},
+                hoverColor: {default: '#ffb703'}
+            },
+            init: function () {
+                var el = this.el;
+                var data = this.data;
+                var originalColor = data.color;
+
+                // On Hover (Cursor or VR Laser Pointer)
+                el.addEventListener('mouseenter', function () {
+                    el.setAttribute('material', 'color', data.hoverColor);
+                    el.setAttribute('scale', '1.1 1.1 1.1');
+                });
+
+                // On Leave
+                el.addEventListener('mouseleave', function () {
+                    el.setAttribute('material', 'color', originalColor);
+                    el.setAttribute('scale', '1 1 1');
+                });
+                
+                // On Click / Trigger Pull
+                el.addEventListener('click', function () {
+                    var text = el.querySelector('a-text');
+                    if(text) {
+                        text.setAttribute('color', '#4CC3D9');
+                        setTimeout(() => text.setAttribute('color', 'white'), 1000);
+                    }
+                });
+            }
+        });
+    </script>
 </head>
-
 <body>
-    <a-scene>
+    <a-scene background="color: #1d3557" renderer="colorManagement: true;">
+        
+        <!-- Player Rig for Quest 3S Controls and Desktop -->
+        <!-- movement-controls allows WASD on PC and thumbstick on Quest -->
+        <a-entity id="rig" movement-controls="speed: 0.15">
+            <a-entity camera position="0 1.6 0" look-controls>
+                <!-- Desktop Cursor (fallback for non-VR) -->
+                <a-cursor raycaster="objects: .clickable" color="#ffffff" opacity="0.5"></a-cursor>
+            </a-entity>
+            <!-- VR Laser Controllers (Quest 3S) -->
+            <a-entity laser-controls="hand: left" raycaster="objects: .clickable; far: 20"></a-entity>
+            <a-entity laser-controls="hand: right" raycaster="objects: .clickable; far: 20"></a-entity>
+        </a-entity>
 
-        <a-sky color="purple"></a-sky>
-        <a-box position="-1 -0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
-        <a-sphere position="0 0.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
-        <a-cylinder position="1 -0.25 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
-        <a-plane position="0 -1 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
+        <!-- Environment Base -->
+        <!-- Floor -->
+        <a-plane position="0 0 0" rotation="-90 0 0" width="50" height="50" color="#f8f9fa" shadow="receive: true"></a-plane>
+        <!-- Sky/Atmosphere -->
+        <a-sky color="#112233"></a-sky>
 
-        <a-image src="https://raw.githubusercontent.com/alluringxstalwart/SourceYISL/main/Landscape1.png"
-            position="0 5 -10" width="25" height="7.5"></a-image>
+        <!-- Main Title -->
+        <a-text value="LIFEBRIDGE" position="0 4 -5" align="center" color="#e63946" scale="3 3 3" font="mozillavr"></a-text>
+        <a-text value="Bridging Gaps to Save Lives" position="0 3.2 -5" align="center" color="#ffffff" scale="1 1 1"></a-text>
 
-        <a-text value="YISL AR VR Workshop" position="0 9.5 -10" align="center" color="white" font="mozillavr"
-            width="10" height="5" anchor="center">
-        </a-text>
+        <!-- Interactive Info Nodes -->
+        
+        <!-- Node 1: Organ Donation -->
+        <a-entity position="-3 1.5 -4" class="clickable" interactive-node="color: #e63946; hoverColor: #4CC3D9" 
+                  geometry="primitive: sphere; radius: 0.5" material="color: #e63946" 
+                  animation="property: object3D.position.y; to: 1.7; dir: alternate; dur: 2000; loop: true">
+            <a-text value="Organ Donation" position="0 0.8 0" align="center" color="white" scale="1 1 1" side="double"></a-text>
+        </a-entity>
 
+        <!-- Node 2: Blood Network -->
+        <a-entity position="0 1.5 -3" class="clickable" interactive-node="color: #e63946; hoverColor: #4CC3D9" 
+                  geometry="primitive: cylinder; radius: 0.4; height: 1" material="color: #e63946" 
+                  animation="property: rotation; to: 0 360 0; dur: 4000; easing: linear; loop: true">
+            <a-text value="Blood Network" position="0 0.8 0" align="center" color="white" scale="1 1 1" side="double"></a-text>
+        </a-entity>
+
+        <!-- Node 3: Emergency Response -->
+        <a-entity position="3 1.5 -4" class="clickable" interactive-node="color: #e63946; hoverColor: #4CC3D9" 
+                  geometry="primitive: box; depth: 0.8; height: 0.8; width: 0.8" material="color: #e63946" 
+                  animation="property: object3D.position.y; to: 1.7; dir: alternate; dur: 2000; loop: true; delay: 500">
+            <a-text value="Emergency Response" position="0 0.8 0" align="center" color="white" scale="1 1 1" side="double"></a-text>
+        </a-entity>
+
+        <!-- Base/Floor decorations for the nodes -->
+        <a-ring position="0 0.01 -3" rotation="-90 0 0" radius-inner="1.5" radius-outer="2" color="#4CC3D9" opacity="0.3"></a-ring>
+        <a-ring position="-3 0.01 -4" rotation="-90 0 0" radius-inner="0.8" radius-outer="1.2" color="#4CC3D9" opacity="0.3"></a-ring>
+        <a-ring position="3 0.01 -4" rotation="-90 0 0" radius-inner="0.8" radius-outer="1.2" color="#4CC3D9" opacity="0.3"></a-ring>
+
+        <!-- Lighting -->
+        <a-light type="ambient" color="#aaccff" intensity="0.5"></a-light>
+        <a-light type="directional" position="2 4 3" color="#ffffff" intensity="0.8" castShadow="true"></a-light>
+        <a-light type="point" position="0 2 -3" color="#e63946" intensity="0.6" distance="10"></a-light>
 
     </a-scene>
 </body>
-
 </html>
