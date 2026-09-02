@@ -1,131 +1,1039 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
-    <title>LIFEBRIDGE - Immersive 3D Experience</title>
-    
-    <!-- A-Frame Core -->
-    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
-    
-    <!-- A-Frame Extras for movement controls -->
-    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.0/dist/aframe-extras.min.js"></script>
-    
-    <!-- A-Frame Environment Component for stunning backgrounds instantly -->
-    <script src="https://unpkg.com/aframe-environment-component@1.3.3/dist/aframe-environment-component.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description"
+        content="LifeBridge - WebXR AR/VR Emergency Bystander Guidance and VR Triage Training System for Meta Quest 3/3S" />
+    <title>LIFEBRIDGE - AR/VR Emergency Support & Training System</title>
 
-    <!-- Custom Component for Hover/Click Interactions -->
+    <!-- A-Frame 1.6.0 Core Library -->
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+
+    <!-- A-Frame Extras (Locomotion, Controls) -->
+    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.0/dist/aframe-extras.min.js"></script>
+
+    <!-- A-Frame Environment Component for VR Scene -->
+    <script
+        src="https://unpkg.com/aframe-environment-component@1.3.3/dist/aframe-environment-component.min.js"></script>
+
+    <style>
+        /* 2D Overlay & Glassmorphism UI */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background-color: #050a14;
+            user-select: none;
+        }
+
+        #desktop-overlay {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 9999;
+            background: rgba(10, 25, 47, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 245, 212, 0.4);
+            border-radius: 14px;
+            padding: 16px 22px;
+            color: #ffffff;
+            pointer-events: auto;
+            max-width: 360px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 245, 212, 0.25);
+            transition: all 0.3s ease;
+        }
+
+        #desktop-overlay h1 {
+            margin: 0 0 6px 0;
+            font-size: 1.28rem;
+            color: #00f5d4;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #desktop-overlay .badge {
+            background: linear-gradient(135deg, #ff0055, #ff5400);
+            color: #fff;
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+        }
+
+        #desktop-overlay p {
+            margin: 5px 0;
+            font-size: 0.82rem;
+            color: #cbd5e1;
+            line-height: 1.45;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(0, 245, 212, 0.15);
+            color: #00f5d4;
+            border: 1px solid rgba(0, 245, 212, 0.3);
+            margin: 6px 0;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00f5d4;
+            box-shadow: 0 0 8px #00f5d4;
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .controls-hint {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            font-size: 0.76rem;
+            color: #94a3b8;
+        }
+
+        .controls-hint span {
+            color: #00f5d4;
+            font-weight: 600;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            background: rgba(0, 245, 212, 0.15);
+            border: 1px solid #00f5d4;
+            color: #00f5d4;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 700;
+            flex: 1;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #00f5d4;
+            color: #050a14;
+            box-shadow: 0 0 12px rgba(0, 245, 212, 0.5);
+        }
+
+        .action-btn.secondary {
+            border-color: #ff0055;
+            color: #ff3377;
+            background: rgba(255, 0, 85, 0.12);
+        }
+
+        .action-btn.secondary:hover {
+            background: #ff0055;
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(255, 0, 85, 0.5);
+        }
+
+        /* Responsive Mobile adjustment */
+        @media (max-width: 600px) {
+            #desktop-overlay {
+                top: 8px;
+                left: 8px;
+                right: 8px;
+                max-width: calc(100vw - 36px);
+                padding: 12px 14px;
+            }
+        }
+    </style>
+
+    <!-- Custom Web Audio, Speech & WebXR Systems -->
     <script>
-        AFRAME.registerComponent('interactive-node', {
+        // =========================================================================
+        // 1. PROCEDURAL AUDIO SYNTHESIZER & SPEECH ENGINE (100% Self-Contained)
+        // =========================================================================
+        const LifeBridgeAudio = {
+            ctx: null,
+            voiceEnabled: true,
+            sfxEnabled: true,
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+
+            speak(text) {
+                if (!this.voiceEnabled || !('speechSynthesis' in window)) return;
+                window.speechSynthesis.cancel(); // Interrupt prior utterance
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1.05;
+                utterance.pitch = 1.0;
+                window.speechSynthesis.speak(utterance);
+            },
+
+            playTone(freq = 440, type = 'sine', duration = 0.1, gainVal = 0.15) {
+                if (!this.sfxEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch (e) { }
+            },
+
+            playHeartbeat(rate = 'normal') {
+                const pitch = rate === 'critical' ? 70 : 110;
+                this.playTone(pitch, 'sine', 0.08, 0.25);
+                setTimeout(() => this.playTone(pitch * 0.8, 'sine', 0.1, 0.2), 120);
+            },
+
+            playMetronomeBeat() {
+                // High-precision punchy metronome tone for CPR
+                this.playTone(1050, 'square', 0.03, 0.22);
+            },
+
+            playClick() {
+                this.playTone(1500, 'sine', 0.02, 0.08);
+            },
+
+            playSuccessChime() {
+                this.playTone(523.25, 'triangle', 0.08, 0.2); // C5
+                setTimeout(() => this.playTone(659.25, 'triangle', 0.08, 0.2), 80); // E5
+                setTimeout(() => this.playTone(783.99, 'triangle', 0.16, 0.25), 160); // G5
+            },
+
+            playAlarm() {
+                this.playTone(850, 'sawtooth', 0.12, 0.25);
+                setTimeout(() => this.playTone(650, 'sawtooth', 0.16, 0.25), 140);
+            },
+
+            playAEDCharge() {
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1400, this.ctx.currentTime + 2.5);
+                    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.2, this.ctx.currentTime + 2.4);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 2.5);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 2.5);
+                } catch (e) { }
+            },
+
+            playDefibShock() {
+                this.playTone(120, 'sawtooth', 0.4, 0.45);
+                setTimeout(() => this.playTone(60, 'square', 0.3, 0.35), 50);
+            }
+        };
+
+        window.addEventListener('click', () => LifeBridgeAudio.init(), { once: true });
+        window.addEventListener('touchstart', () => LifeBridgeAudio.init(), { once: true });
+
+        // =========================================================================
+        // 2. META QUEST 3 / 3S CONTROLLER HAPTICS & INPUT HANDLER
+        // =========================================================================
+        AFRAME.registerComponent('quest-controller-feedback', {
             schema: {
-                color: {default: '#e63946'},
-                hoverColor: {default: '#00ffcc'}
+                hand: { default: 'right' }
             },
             init: function () {
-                var el = this.el;
-                var data = this.data;
-                var originalColor = data.color;
+                const el = this.el;
 
-                el.addEventListener('mouseenter', function () {
-                    // Make it glow and change color on hover
-                    el.setAttribute('material', 'color', data.hoverColor);
-                    el.setAttribute('material', 'emissive', data.hoverColor);
-                    el.setAttribute('material', 'emissiveIntensity', 0.8);
-                    el.setAttribute('scale', '1.15 1.15 1.15');
-                    
-                    // Show details panel
-                    var details = el.querySelector('.details');
-                    if(details) details.setAttribute('visible', 'true');
+                // Quest 3 / 3S Touch Controller Events
+                el.addEventListener('triggerdown', () => {
+                    this.triggerHaptic(0.5, 60);
+                });
+                el.addEventListener('gripdown', () => {
+                    this.triggerHaptic(0.6, 80);
+                });
+                el.addEventListener('abuttondown', () => {
+                    this.triggerHaptic(0.4, 40);
+                    LifeBridgeAudio.playClick();
+                });
+                el.addEventListener('xbuttondown', () => {
+                    this.triggerHaptic(0.4, 40);
+                    LifeBridgeAudio.playClick();
                 });
 
-                el.addEventListener('mouseleave', function () {
-                    // Revert to original state
-                    el.setAttribute('material', 'color', originalColor);
-                    el.setAttribute('material', 'emissive', originalColor);
-                    el.setAttribute('material', 'emissiveIntensity', 0.5);
+                // Laser Raycaster Hover Polish
+                el.addEventListener('raycaster-intersection', () => {
+                    this.triggerHaptic(0.15, 20);
+                });
+            },
+            triggerHaptic: function (intensity = 0.5, durationMs = 50) {
+                if (navigator.getGamepads) {
+                    const gamepads = navigator.getGamepads();
+                    for (let i = 0; i < gamepads.length; i++) {
+                        const gp = gamepads[i];
+                        if (gp && gp.hapticActuators && gp.hapticActuators.length > 0) {
+                            try {
+                                gp.hapticActuators[0].pulse(intensity, durationMs);
+                            } catch (e) { }
+                        } else if (gp && gp.vibrationActuator) {
+                            try {
+                                gp.vibrationActuator.playEffect('dual-rumble', {
+                                    startDelay: 0,
+                                    duration: durationMs,
+                                    weakMagnitude: intensity,
+                                    strongMagnitude: intensity
+                                });
+                            } catch (e) { }
+                        }
+                    }
+                }
+            }
+        });
+
+        // =========================================================================
+        // 3. MASTER LIFEBRIDGE EMERGENCY LOGIC SYSTEM
+        // =========================================================================
+        AFRAME.registerComponent('lifebridge-system', {
+            schema: {
+                mode: { default: 'VR_TRAINING' }, // 'VR_TRAINING' | 'AR_EMERGENCY'
+                cprCount: { default: 0 },
+                cprTarget: { default: 30 },
+                cycleCount: { default: 1 },
+                sosDispatched: { default: false },
+                patientState: { default: 'UNRESPONSIVE' } // 'UNRESPONSIVE', 'CPR_IN_PROGRESS', 'DEFIBRILLATED', 'STABILIZED'
+            },
+            init: function () {
+                this.cprInterval = null;
+                this.ecgInterval = null;
+                this.cprActive = false;
+
+                this.setupEventListeners();
+                this.startHeartbeatLoop();
+            },
+
+            setupEventListeners: function () {
+                // Interactive Buttons Binding
+                const btnVR = document.querySelector('#btn-mode-vr');
+                const btnAR = document.querySelector('#btn-mode-ar');
+                const btnSOS = document.querySelector('#btn-sos-call');
+                const btnCheckVitals = document.querySelector('#btn-check-vitals');
+                const btnStartCPR = document.querySelector('#btn-start-cpr');
+                const btnCompress = document.querySelector('#btn-cpr-compress');
+                const btnAED = document.querySelector('#btn-apply-aed');
+                const btnReset = document.querySelector('#btn-reset-sim');
+                const chestZone = document.querySelector('#casualty-chest');
+
+                if (btnVR) btnVR.addEventListener('click', () => this.switchMode('VR_TRAINING'));
+                if (btnAR) btnAR.addEventListener('click', () => this.switchMode('AR_EMERGENCY'));
+                if (btnSOS) btnSOS.addEventListener('click', () => this.dispatchSOS());
+                if (btnCheckVitals) btnCheckVitals.addEventListener('click', () => this.scanVitals());
+                if (btnStartCPR) btnStartCPR.addEventListener('click', () => this.startCPRGuide());
+                if (btnCompress) btnCompress.addEventListener('click', () => this.executeCompression());
+                if (btnAED) btnAED.addEventListener('click', () => this.applyAED());
+                if (btnReset) btnReset.addEventListener('click', () => this.resetSimulation());
+
+                // Direct Chest Click/Trigger for hands-on CPR
+                if (chestZone) chestZone.addEventListener('click', () => {
+                    this.executeCompression();
+                });
+            },
+
+            switchMode: function (targetMode) {
+                this.data.mode = targetMode;
+                LifeBridgeAudio.playClick();
+
+                const env = document.querySelector('#vr-environment');
+                const roadsideEnv = document.querySelector('#roadside-props');
+                const arOverlay = document.querySelector('#ar-grid-overlay');
+                const modeHUD = document.querySelector('#hud-mode-text');
+                const liveStatusPill = document.querySelector('#overlay-status-pill');
+
+                if (targetMode === 'VR_TRAINING') {
+                    if (env) env.setAttribute('visible', 'true');
+                    if (roadsideEnv) roadsideEnv.setAttribute('visible', 'true');
+                    if (arOverlay) arOverlay.setAttribute('visible', 'false');
+                    if (modeHUD) modeHUD.setAttribute('value', 'MODE: VR SIMULATION (VIRTUAL TRAIN/SCENARIO)');
+                    if (liveStatusPill) liveStatusPill.innerHTML = '<span class="status-dot"></span> VR Training Active';
+                    this.updateInstruction("VR TRAINING: Assess casualty. 1) Tap 'SCAN VITALS' or 2) Dispatch 'SOS'.", '#00f5d4');
+                    LifeBridgeAudio.speak("Virtual Reality accident simulation active. Assess casualty vitals.");
+                } else {
+                    // AR Mode (Passthrough Optimized)
+                    if (env) env.setAttribute('visible', 'false');
+                    if (roadsideEnv) roadsideEnv.setAttribute('visible', 'false');
+                    if (arOverlay) arOverlay.setAttribute('visible', 'true');
+                    if (modeHUD) modeHUD.setAttribute('value', 'MODE: AR PASSTHROUGH HUD (LIVE RESCUE OVERLAY)');
+                    if (liveStatusPill) liveStatusPill.innerHTML = '<span class="status-dot" style="background:#ff0055; box-shadow:0 0 8px #ff0055;"></span> AR Passthrough Active';
+                    this.updateInstruction("AR BYSTANDER HUD: Real-time guidance overlay active. Target chest marker.", '#ff0055');
+                    LifeBridgeAudio.speak("Augmented Reality bystander mode activated. Align target marker with victim chest.");
+                }
+            },
+
+            updateInstruction: function (text, color = '#ffffff') {
+                const guideText = document.querySelector('#hud-guide-text');
+                if (guideText) {
+                    guideText.setAttribute('value', text);
+                    guideText.setAttribute('color', color);
+                }
+            },
+
+            scanVitals: function () {
+                LifeBridgeAudio.playAlarm();
+                this.triggerHaptics(0.6, 120);
+
+                const vitalCard = document.querySelector('#vital-hud-card');
+                const pulseText = document.querySelector('#vital-pulse');
+                const bpText = document.querySelector('#vital-bp');
+                const spo2Text = document.querySelector('#vital-spo2');
+                const statusBadge = document.querySelector('#vital-status-badge');
+                const scanRing = document.querySelector('#scan-pulse-ring');
+
+                if (scanRing) {
+                    scanRing.setAttribute('visible', 'true');
+                    scanRing.setAttribute('animation', 'property: scale; from: 0.1 0.1 0.1; to: 3.5 3.5 3.5; dur: 1200; loop: 2; easing: easeOutQuad');
+                    setTimeout(() => scanRing.setAttribute('visible', 'false'), 2400);
+                }
+
+                if (vitalCard) vitalCard.setAttribute('visible', 'true');
+                if (pulseText) pulseText.setAttribute('value', 'HEART RATE: 36 BPM (CRITICAL ARREST)');
+                if (bpText) bpText.setAttribute('value', 'BLOOD PRESSURE: 70/40 mmHg (COLLAPSE)');
+                if (spo2Text) spo2Text.setAttribute('value', 'SpO2: 78% (SEVERE HYPOXIA)');
+                if (statusBadge) {
+                    statusBadge.setAttribute('value', '[!] UNRESPONSIVE - COMMENCE CPR IMMEDIATELY');
+                    statusBadge.setAttribute('color', '#ff0055');
+                }
+
+                this.updateInstruction("CRITICAL: Patient in Cardiac Arrest! 1) Press 'DISPATCH SOS' 2) 'START CPR'.", '#ff0055');
+                LifeBridgeAudio.speak("Emergency: Victim is unresponsive and hypoxic. Call emergency services and begin CPR.");
+                setTimeout(() => LifeBridgeAudio.playSuccessChime(), 1000);
+            },
+
+            dispatchSOS: function () {
+                if (this.data.sosDispatched) return;
+                this.data.sosDispatched = true;
+                LifeBridgeAudio.playAlarm();
+                this.triggerHaptics(0.8, 250);
+
+                const sosCard = document.querySelector('#sos-status-panel');
+                const radarBeam = document.querySelector('#sos-radar-beam');
+                const sosBtn = document.querySelector('#btn-sos-call');
+
+                if (sosCard) sosCard.setAttribute('visible', 'true');
+                if (radarBeam) {
+                    radarBeam.setAttribute('visible', 'true');
+                    radarBeam.setAttribute('animation', 'property: scale; from: 1 0.1 1; to: 1 35 1; dur: 1600; loop: true; easing: easeOutCubic');
+                }
+                if (sosBtn) {
+                    sosBtn.setAttribute('material', 'color: #00f5d4; emissive: #00f5d4; emissiveIntensity: 0.85');
+                    const txt = sosBtn.querySelector('a-text');
+                    if (txt) txt.setAttribute('value', '✓ EMS DISPATCHED\n[ETA 3.8 MIN]');
+                }
+
+                this.updateInstruction("SOS SENT: GPS 28.6139° N, 77.2090° E. Ambulance Unit #14 En Route (ETA 3.8m).", '#00f5d4');
+                LifeBridgeAudio.speak("Emergency SOS transmitted. GPS coordinates and medical telemetry dispatched to ambulance.");
+                setTimeout(() => LifeBridgeAudio.playSuccessChime(), 1200);
+            },
+
+            startCPRGuide: function () {
+                this.cprActive = true;
+                this.data.cprCount = 0;
+                LifeBridgeAudio.playSuccessChime();
+                this.triggerHaptics(0.5, 100);
+
+                const cprPanel = document.querySelector('#cpr-interactive-panel');
+                const metronomeSphere = document.querySelector('#metronome-indicator');
+                if (cprPanel) cprPanel.setAttribute('visible', 'true');
+
+                this.updateInstruction("CPR METRONOME ACTIVE (110 BPM): Push chest 5-6 cm deep! Tap 'PUSH CHEST'.", '#ffb703');
+                LifeBridgeAudio.speak("CPR Metronome started at one hundred and ten beats per minute. Push down firmly on the chest target.");
+
+                // 110 BPM Metronome interval (~545ms)
+                if (this.cprInterval) clearInterval(this.cprInterval);
+                this.cprInterval = setInterval(() => {
+                    if (!this.cprActive) return;
+                    LifeBridgeAudio.playMetronomeBeat();
+                    if (metronomeSphere) {
+                        metronomeSphere.setAttribute('material', 'emissiveIntensity: 2.0; color: #00f5d4');
+                        setTimeout(() => {
+                            metronomeSphere.setAttribute('material', 'emissiveIntensity: 0.3; color: #ff0055');
+                        }, 130);
+                    }
+                }, 545);
+            },
+
+            executeCompression: function () {
+                if (!this.cprActive) {
+                    this.startCPRGuide();
+                }
+
+                this.data.cprCount++;
+                LifeBridgeAudio.playTone(320, 'square', 0.05, 0.25);
+                this.triggerHaptics(0.85, 90);
+
+                const chestMesh = document.querySelector('#casualty-chest');
+                const countText = document.querySelector('#cpr-counter-text');
+                const progressBar = document.querySelector('#cpr-progress-bar');
+                const qualityText = document.querySelector('#cpr-quality-text');
+
+                // Animate Chest Compression & Recoil
+                if (chestMesh) {
+                    chestMesh.setAttribute('animation__compress', 'property: position; to: 0 0.41 -0.1; dur: 75; easing: easeInQuad');
+                    setTimeout(() => {
+                        chestMesh.setAttribute('animation__recoil', 'property: position; to: 0 0.48 -0.1; dur: 120; easing: easeOutQuad');
+                    }, 80);
+                }
+
+                if (countText) {
+                    countText.setAttribute('value', `COMPRESSIONS: ${this.data.cprCount} / ${this.data.cprTarget}`);
+                }
+
+                if (progressBar) {
+                    const frac = Math.min(this.data.cprCount / this.data.cprTarget, 1.0);
+                    progressBar.setAttribute('scale', `${frac * 1.4} 0.1 1`);
+                    progressBar.setAttribute('position', `${-0.7 + (frac * 0.7)} 0 0.01`);
+                }
+
+                if (qualityText) {
+                    const feedbacks = ["PERFECT DEPTH (5.2 cm) | 110 BPM", "GOOD RHYTHM! ALLOW FULL RECOIL", "MAINTAIN FIRM PRESSURE", "EXCELLENT CADENCE!"];
+                    qualityText.setAttribute('value', feedbacks[this.data.cprCount % feedbacks.length]);
+                    qualityText.setAttribute('color', '#00f5d4');
+                }
+
+                // Milestone Reached: 30 Compressions
+                if (this.data.cprCount >= this.data.cprTarget) {
+                    LifeBridgeAudio.playSuccessChime();
+                    this.updateInstruction("30 COMPRESSIONS COMPLETED! Deliver 2 Breaths or Continue Hands-Only CPR. Prepare AED!", '#00f5d4');
+                    LifeBridgeAudio.speak("Thirty compressions complete. Prepare the Automated External Defibrillator.");
+
+                    const aedBtn = document.querySelector('#btn-apply-aed');
+                    if (aedBtn) {
+                        aedBtn.setAttribute('material', 'color: #ffb703; emissive: #ffb703; emissiveIntensity: 0.95');
+                    }
+                }
+            },
+
+            applyAED: function () {
+                LifeBridgeAudio.playAlarm();
+                this.triggerHaptics(0.9, 300);
+
+                const aedHUD = document.querySelector('#aed-status-panel');
+                const shockEffect = document.querySelector('#aed-shock-effect');
+                if (aedHUD) aedHUD.setAttribute('visible', 'true');
+
+                this.updateInstruction("AED ATTACHED: 'ANALYZING HEART RHYTHM... STAND CLEAR! DELIVERING SHOCK IN 3s...'", '#ffb703');
+                LifeBridgeAudio.speak("Analyzing heart rhythm. Shock advised. Stand clear of victim.");
+                LifeBridgeAudio.playAEDCharge();
+
+                setTimeout(() => {
+                    LifeBridgeAudio.playDefibShock();
+                    this.triggerHaptics(1.0, 500);
+
+                    if (shockEffect) {
+                        shockEffect.setAttribute('visible', 'true');
+                        shockEffect.setAttribute('animation', 'property: scale; from: 0.2 0.2 0.2; to: 4.5 4.5 4.5; dur: 700; loop: 2');
+                        setTimeout(() => shockEffect.setAttribute('visible', 'false'), 1600);
+                    }
+
+                    // Restore vitals to stable sinus rhythm
+                    const pulseText = document.querySelector('#vital-pulse');
+                    const bpText = document.querySelector('#vital-bp');
+                    const spo2Text = document.querySelector('#vital-spo2');
+                    const statusBadge = document.querySelector('#vital-status-badge');
+
+                    if (pulseText) pulseText.setAttribute('value', 'HEART RATE: 74 BPM (SINUS RHYTHM RESTORED)');
+                    if (bpText) bpText.setAttribute('value', 'BLOOD PRESSURE: 118/76 mmHg (STABILIZING)');
+                    if (spo2Text) spo2Text.setAttribute('value', 'SpO2: 96% (RECOVERED)');
+                    if (statusBadge) {
+                        statusBadge.setAttribute('value', '[✓] ROSC ACHIEVED - CASUALTY STABLE');
+                        statusBadge.setAttribute('color', '#00f5d4');
+                    }
+
+                    this.updateInstruction("SUCCESS: Return of Spontaneous Circulation (ROSC). LifeBridge synced with EMS!", '#00f5d4');
+                    LifeBridgeAudio.speak("Shock delivered. Pulse restored. Victim vitals stable. Paramedics arriving on scene.");
+                    LifeBridgeAudio.playSuccessChime();
+                }, 3200);
+            },
+
+            resetSimulation: function () {
+                this.cprActive = false;
+                if (this.cprInterval) clearInterval(this.cprInterval);
+                this.data.cprCount = 0;
+                this.data.sosDispatched = false;
+                LifeBridgeAudio.playClick();
+
+                const cprPanel = document.querySelector('#cpr-interactive-panel');
+                const vitalCard = document.querySelector('#vital-hud-card');
+                const sosCard = document.querySelector('#sos-status-panel');
+                const aedHUD = document.querySelector('#aed-status-panel');
+                const radarBeam = document.querySelector('#sos-radar-beam');
+                const sosBtn = document.querySelector('#btn-sos-call');
+                const progressBar = document.querySelector('#cpr-progress-bar');
+                const countText = document.querySelector('#cpr-counter-text');
+                const aedBtn = document.querySelector('#btn-apply-aed');
+
+                if (cprPanel) cprPanel.setAttribute('visible', 'false');
+                if (vitalCard) vitalCard.setAttribute('visible', 'false');
+                if (sosCard) sosCard.setAttribute('visible', 'false');
+                if (aedHUD) aedHUD.setAttribute('visible', 'false');
+                if (radarBeam) radarBeam.setAttribute('visible', 'false');
+                if (progressBar) progressBar.setAttribute('scale', '0.01 0.1 1');
+                if (countText) countText.setAttribute('value', 'COMPRESSIONS: 0 / 30');
+
+                if (sosBtn) {
+                    sosBtn.setAttribute('material', 'color: #ff0055; emissive: #ff0055; emissiveIntensity: 0.6');
+                    const txt = sosBtn.querySelector('a-text');
+                    if (txt) txt.setAttribute('value', '1. DISPATCH\n112 / 911 SOS');
+                }
+
+                if (aedBtn) {
+                    aedBtn.setAttribute('material', 'color: #7209b7; emissive: #7209b7; emissiveIntensity: 0.5');
+                }
+
+                this.switchMode(this.data.mode);
+            },
+
+            startHeartbeatLoop: function () {
+                setInterval(() => {
+                    if (this.data.mode === 'VR_TRAINING' && !this.cprActive) {
+                        LifeBridgeAudio.playHeartbeat(this.data.patientState === 'UNRESPONSIVE' ? 'critical' : 'normal');
+                    }
+                }, 1900);
+            },
+
+            triggerHaptics: function (strength = 0.5, dur = 50) {
+                const leftHand = document.querySelector('#left-hand');
+                const rightHand = document.querySelector('#right-hand');
+                if (leftHand && leftHand.components['quest-controller-feedback']) {
+                    leftHand.components['quest-controller-feedback'].triggerHaptic(strength, dur);
+                }
+                if (rightHand && rightHand.components['quest-controller-feedback']) {
+                    rightHand.components['quest-controller-feedback'].triggerHaptic(strength, dur);
+                }
+            }
+        });
+
+        // =========================================================================
+        // 4. INTERACTIVE 3D BUTTON FEEDBACK (Hover, Audio & Pointer Animations)
+        // =========================================================================
+        AFRAME.registerComponent('vr-button', {
+            schema: {
+                scaleOnHover: { default: 1.08 }
+            },
+            init: function () {
+                const el = this.el;
+                const data = this.data;
+
+                el.addEventListener('mouseenter', () => {
+                    el.setAttribute('material', 'emissiveIntensity', 0.95);
+                    el.setAttribute('scale', `${data.scaleOnHover} ${data.scaleOnHover} ${data.scaleOnHover}`);
+                    LifeBridgeAudio.playClick();
+                });
+
+                el.addEventListener('mouseleave', () => {
+                    el.setAttribute('material', 'emissiveIntensity', 0.45);
                     el.setAttribute('scale', '1 1 1');
-                    
-                    // Hide details panel
-                    var details = el.querySelector('.details');
-                    if(details) details.setAttribute('visible', 'false');
                 });
             }
         });
     </script>
 </head>
+
 <body>
-    <!-- Added anti-aliasing and color management for better visuals -->
-    <a-scene renderer="colorManagement: true; antialias: true;" fog="type: exponential; color: #1d3557; density: 0.02">
-        
-        <!-- Player Rig -->
-        <a-entity id="rig" movement-controls="speed: 0.15">
-            <a-entity camera position="0 1.6 0" look-controls>
-                <a-cursor raycaster="objects: .clickable" color="#00ffcc" animation__click="property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1"></a-cursor>
+
+    <!-- 2D Desktop / Mobile Glassmorphism Control Center -->
+    <div id="desktop-overlay">
+        <h1>LifeBridge <span class="badge">Quest 3 / 3S Ready</span></h1>
+        <p><strong>AR/VR Emergency Bystander Response & Triage Prototype</strong></p>
+        <div id="overlay-status-pill" class="status-pill">
+            <span class="status-dot"></span> VR Training Active
+        </div>
+        <p>Real-time bystander emergency assistant and VR accident triage training system with spatial telemetry.</p>
+
+        <div class="controls-hint">
+            <strong>Quest 3/3S:</strong> Aim <span>Laser Pointer</span> & Pull <span>Trigger</span>.<br>
+            <strong>Desktop:</strong> Move with <span>WASD</span>, Look with <span>Mouse Drag</span>, Click 3D Panels.
+        </div>
+
+        <div class="btn-group">
+            <button class="action-btn"
+                onclick="LifeBridgeAudio.init(); LifeBridgeAudio.speak('Audio and voice guidance system ready.'); this.innerText='Audio Active ✓';">
+                🔊 Audio & Voice ON
+            </button>
+            <button class="action-btn secondary"
+                onclick="const scene = document.querySelector('a-scene'); if(scene && scene.components['lifebridge-system']) scene.components['lifebridge-system'].resetSimulation();">
+                🔄 Reset Sim
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN WEBXR SCENE -->
+    <a-scene lifebridge-system
+        renderer="colorManagement: true; antialias: true; highRefreshRate: true; foveationLevel: 2;"
+        fog="type: exponential; color: #050a14; density: 0.015"
+        webxr="optionalFeatures: hit-test, local-floor, dom-overlay; overlayElement: #desktop-overlay"
+        cursor="rayOrigin: mouse" raycaster="objects: .clickable">
+
+        <!-- =========================================================================
+             PLAYER RIG, HEADSET CAMERA & META QUEST 3 / 3S CONTROLLERS
+             ========================================================================= -->
+        <a-entity id="player-rig" movement-controls="speed: 0.2; fly: false" position="0 0 0">
+            <!-- Camera & Head HUD -->
+            <a-entity id="head" camera position="0 1.6 0" look-controls="pointerLockEnabled: false">
+                <!-- Cursor for Desktop/Mobile Click fallback -->
+                <a-cursor id="camera-cursor" position="0 0 -1"
+                    geometry="primitive: ring; radiusInner: 0.012; radiusOuter: 0.02"
+                    material="color: #00f5d4; shader: flat; opacity: 0.8" raycaster="objects: .clickable"
+                    animation__click="property: scale; startEvents: click; easing: easeInCubic; dur: 120; from: 0.1 0.1 0.1; to: 1 1 1">
+                </a-cursor>
+
+                <!-- Floating Mode Indicator HUD -->
+                <a-entity position="0 0.48 -1.2" scale="0.75 0.75 0.75">
+                    <a-plane width="1.7" height="0.22" color="#0a192f" material="opacity: 0.9; transparent: true">
+                        <a-text id="hud-mode-text" value="MODE: VR SIMULATION (VIRTUAL TRAIN/SCENARIO)" align="center"
+                            color="#00f5d4" scale="0.32 0.32 0.32" position="0 0 0.02"></a-text>
+                    </a-plane>
+                </a-entity>
             </a-entity>
-            <a-entity laser-controls="hand: left" raycaster="objects: .clickable; far: 20"></a-entity>
-            <a-entity laser-controls="hand: right" raycaster="objects: .clickable; far: 20"></a-entity>
+
+            <!-- Quest 3/3S Left Hand Controller with Raycaster & Haptics -->
+            <a-entity id="left-hand" oculus-touch-controls="hand: left; model: true" laser-controls="hand: left"
+                raycaster="objects: .clickable; far: 18; lineColor: #ff0055; lineOpacity: 0.85"
+                quest-controller-feedback="hand: left">
+            </a-entity>
+
+            <!-- Quest 3/3S Right Hand Controller with Raycaster & Haptics -->
+            <a-entity id="right-hand" oculus-touch-controls="hand: right; model: true" laser-controls="hand: right"
+                raycaster="objects: .clickable; far: 18; lineColor: #00f5d4; lineOpacity: 0.85"
+                quest-controller-feedback="hand: right">
+            </a-entity>
         </a-entity>
 
-        <!-- Breathtaking Environment (Preset: contact) -->
-        <!-- This adds an immediate premium feel with grid lights and a futuristic sky -->
-        <a-entity environment="preset: contact; skyType: atmosphere; lighting: point; groundColor: #1d3557; grid: 1x1; gridColor: #e63946"></a-entity>
+        <!-- =========================================================================
+             IMMERSIVE VR ENVIRONMENT BACKDROP
+             ========================================================================= -->
+        <a-entity id="vr-environment"
+            environment="preset: night; skyType: gradient; skyColor: #050a14; horizonColor: #102a43; ground: hills; groundColor: #0b132b; groundColor2: #1c2541; grid: 2x2; gridColor: #00f5d4; lighting: point; lightPosition: 0 8 -4"></a-entity>
 
-        <!-- Central Hologram Platform -->
-        <a-cylinder position="0 0.1 -5" radius="3.5" height="0.1" color="#112233" material="metalness: 0.8; roughness: 0.2" shadow="receive: true"></a-cylinder>
-        <a-ring position="0 0.16 -5" rotation="-90 0 0" radius-inner="3.3" radius-outer="3.5" color="#00ffcc" material="emissive: #00ffcc; emissiveIntensity: 1"></a-ring>
-        
-        <!-- Main Title with floating animation -->
-        <a-entity position="0 4 -5" animation="property: object3D.position.y; to: 4.2; dir: alternate; dur: 3000; loop: true; easing: easeInOutSine">
-            <a-text value="LIFEBRIDGE" align="center" color="#ffffff" scale="4 4 4" font="mozillavr"></a-text>
-            <a-text value="Connecting Hope, Saving Lives" position="0 -0.8 0" align="center" color="#00ffcc" scale="1.2 1.2 1.2"></a-text>
+        <!-- AR Mode Spatial Target Marker (Active in Passthrough AR Mode) -->
+        <a-entity id="ar-grid-overlay" visible="false">
+            <a-circle rotation="-90 0 0" radius="4" color="#00f5d4"
+                material="wireframe: true; opacity: 0.35"></a-circle>
+            <a-ring rotation="-90 0 0" radius-inner="2.5" radius-outer="2.6" color="#ff0055"
+                material="emissive: #ff0055; emissiveIntensity: 1.2"></a-ring>
         </a-entity>
 
-        <!-- Interactive Hubs -->
-        
-        <!-- 1. Organ Donation -->
-        <a-entity position="-2.5 1.5 -4" class="clickable" interactive-node="color: #e63946; hoverColor: #00ffcc" 
-                  geometry="primitive: octahedron; radius: 0.5" material="color: #e63946; emissive: #e63946; emissiveIntensity: 0.5; wireframe: false" 
-                  animation="property: rotation; to: 0 360 0; dur: 5000; loop: true; easing: linear">
-            
-            <!-- We counter-rotate the text so it stays readable while the shape spins -->
-            <a-entity animation="property: rotation; to: 0 -360 0; dur: 5000; loop: true; easing: linear">
-                <a-text value="ORGAN DONATION" position="0 1 0" align="center" color="#ffffff" scale="1.2 1.2 1.2" side="double"></a-text>
-                <!-- Hidden Details Panel -->
-                <a-plane class="details" visible="false" position="0 -1.2 0" width="2" height="0.8" color="#1d3557" material="opacity: 0.9">
-                    <a-text value="Pledge to donate organs.\n1 donor can save 8 lives." align="center" scale="0.7 0.7 0.7" color="#ffffff"></a-text>
+        <!-- Roadside Accident Virtual Props -->
+        <a-entity id="roadside-props" position="0 0 -4">
+            <!-- Road Surface -->
+            <a-box position="0 -0.05 0" width="16" height="0.1" depth="8" color="#111625"
+                material="roughness: 0.9"></a-box>
+            <!-- Yellow Road Dividers -->
+            <a-plane position="-3.5 0.01 0" rotation="-90 0 0" width="0.22" height="7.5" color="#ffb703"></a-plane>
+            <a-plane position="3.5 0.01 0" rotation="-90 0 0" width="0.22" height="7.5" color="#ffb703"></a-plane>
+
+            <!-- Hazard Cones -->
+            <a-cone position="-2.8 0.4 1.2" radius-bottom="0.28" radius-top="0.05" height="0.8" color="#ff5400"
+                material="emissive: #ff5400; emissiveIntensity: 0.4">
+                <a-cylinder position="0 0.1 0" radius="0.24" height="0.16" color="#ffffff"></a-cylinder>
+            </a-cone>
+            <a-cone position="2.8 0.4 1.2" radius-bottom="0.28" radius-top="0.05" height="0.8" color="#ff5400"
+                material="emissive: #ff5400; emissiveIntensity: 0.4">
+                <a-cylinder position="0 0.1 0" radius="0.24" height="0.16" color="#ffffff"></a-cylinder>
+            </a-cone>
+
+            <!-- Emergency Vehicle Flashing Lightbar -->
+            <a-entity position="-4.5 1.4 -2.2">
+                <a-box width="1.4" height="0.8" depth="2.2" color="#1a233a" material="metalness: 0.7"></a-box>
+                <!-- Red Strobe -->
+                <a-cylinder position="-0.35 0.5 0" radius="0.16" height="0.26" color="#ff0055"
+                    material="emissive: #ff0055; emissiveIntensity: 1.5"
+                    animation="property: material.emissiveIntensity; from: 0.2; to: 2.2; dir: alternate; dur: 380; loop: true"></a-cylinder>
+                <!-- Blue Strobe -->
+                <a-cylinder position="0.35 0.5 0" radius="0.16" height="0.26" color="#0066ff"
+                    material="emissive: #0066ff; emissiveIntensity: 1.5"
+                    animation="property: material.emissiveIntensity; from: 2.2; to: 0.2; dir: alternate; dur: 380; loop: true"></a-cylinder>
+                <a-light type="point" color="#ff0055" intensity="1.8" distance="8" position="-0.35 0.8 0"></a-light>
+                <a-light type="point" color="#0066ff" intensity="1.8" distance="8" position="0.35 0.8 0"></a-light>
+            </a-entity>
+        </a-entity>
+
+        <!-- =========================================================================
+             CENTRAL CASUALTY / VICTIM TRIAGE PLATFORM
+             ========================================================================= -->
+        <a-entity id="casualty-station" position="0 0 -2.8">
+            <!-- Hologram Floor Pad -->
+            <a-cylinder position="0 0.05 0" radius="2.4" height="0.1" color="#0a192f"
+                material="metalness: 0.8; roughness: 0.2"></a-cylinder>
+            <a-ring position="0 0.11 0" rotation="-90 0 0" radius-inner="2.1" radius-outer="2.3" color="#00f5d4"
+                material="emissive: #00f5d4; emissiveIntensity: 0.85"></a-ring>
+
+            <!-- Animated SOS Satellite Uplink Beam -->
+            <a-cylinder id="sos-radar-beam" visible="false" position="0 12 0" radius="2.0" height="24" color="#ff0055"
+                material="transparent: true; opacity: 0.28; side: double; wireframe: true"></a-cylinder>
+
+            <!-- Scan Vitals Pulse Ring -->
+            <a-ring id="scan-pulse-ring" visible="false" position="0 0.35 0" rotation="-90 0 0" radius-inner="0.3"
+                radius-outer="0.4" color="#00f5d4" material="emissive: #00f5d4; emissiveIntensity: 1.8"></a-ring>
+
+            <!-- AED Shock Burst Rings -->
+            <a-ring id="aed-shock-effect" visible="false" position="0 0.6 0" rotation="-90 0 0" radius-inner="0.5"
+                radius-outer="0.65" color="#ffb703" material="emissive: #ffb703; emissiveIntensity: 3.0"></a-ring>
+
+            <!-- CASUALTY DUMMY MESH -->
+            <a-entity id="casualty-model" position="0 0 0">
+                <!-- Stretcher Base -->
+                <a-box position="0 0.2 0" width="1.2" height="0.1" depth="2.3" color="#1c2541"
+                    material="roughness: 0.8"></a-box>
+
+                <!-- Head -->
+                <a-sphere position="0 0.52 -0.85" radius="0.22" color="#d4a373">
+                    <a-sphere position="0 0.05 0.18" radius="0.05" color="#264653"></a-sphere>
+                </a-sphere>
+
+                <!-- Interactive Chest Target -->
+                <a-box id="casualty-chest" class="clickable" position="0 0.48 -0.1" width="0.65" height="0.28" depth="0.82"
+                    color="#3a86ff" material="roughness: 0.5">
+                    <!-- CPR Compression Target Icon -->
+                    <a-ring position="0 0.15 0" rotation="-90 0 0" radius-inner="0.09" radius-outer="0.16"
+                        color="#ff0055" material="emissive: #ff0055; emissiveIntensity: 1.0"></a-ring>
+                    <a-text value="PUSH HERE\n(CPR ZONE)" position="0 0.16 0" rotation="-90 0 0" align="center"
+                        scale="0.35 0.35 0.35" color="#ffffff"></a-text>
+                </a-box>
+
+                <!-- Limbs -->
+                <a-cylinder position="-0.45 0.38 -0.1" rotation="0 0 16" radius="0.09" height="0.75"
+                    color="#3a86ff"></a-cylinder>
+                <a-cylinder position="0.45 0.38 -0.1" rotation="0 0 -16" radius="0.09" height="0.75"
+                    color="#3a86ff"></a-cylinder>
+                <a-cylinder position="-0.22 0.32 0.8" radius="0.11" height="0.95" color="#1d3557"></a-cylinder>
+                <a-cylinder position="0.22 0.32 0.8" radius="0.11" height="0.95" color="#1d3557"></a-cylinder>
+
+                <!-- Floating Status Card -->
+                <a-entity position="0 1.25 -0.1"
+                    animation="property: position; to: 0 1.35 -0.1; dir: alternate; dur: 1800; loop: true; easing: easeInOutSine">
+                    <a-plane width="1.5" height="0.42" color="#0a192f" material="opacity: 0.88; transparent: true">
+                        <a-text value="CASUALTY: ADULT MALE (TRAUMA)\nSTATUS: NON-RESPONSIVE / NO PULSE" align="center"
+                            color="#ffffff" scale="0.32 0.32 0.32" position="0 0 0.01"></a-text>
+                    </a-plane>
+                </a-entity>
+            </a-entity>
+        </a-entity>
+
+        <!-- =========================================================================
+             HOLOGRAPHIC MISSION CONTROL HUD (Center Panel)
+             ========================================================================= -->
+        <a-entity id="main-hud-panel" position="0 2.2 -2.5" rotation="10 0 0">
+            <!-- Header -->
+            <a-entity position="0 0.82 0">
+                <a-text value="LIFEBRIDGE EMERGENCY SYSTEM" align="center" color="#ffffff" scale="1.45 1.45 1.45"
+                    font="mozillavr"></a-text>
+                <a-text id="hud-guide-text"
+                    value="ASSESSMENT: Assess victim responsiveness. Choose mode or follow 1-2-3-4 triage." align="center"
+                    color="#00f5d4" scale="0.65 0.65 0.65" position="0 -0.32 0"></a-text>
+            </a-entity>
+
+            <!-- Mode Selector Switchers -->
+            <a-entity position="0 0.25 0">
+                <!-- VR Mode -->
+                <a-entity id="btn-mode-vr" class="clickable" vr-button position="-1.1 0 0">
+                    <a-plane width="1.0" height="0.32" color="#00f5d4"
+                        material="emissive: #00f5d4; emissiveIntensity: 0.45">
+                        <a-text value="[VR] TRAINING SIM" align="center" color="#050a14" scale="0.45 0.45 0.45"
+                            position="0 0 0.02"></a-text>
+                    </a-plane>
+                </a-entity>
+
+                <!-- AR Mode -->
+                <a-entity id="btn-mode-ar" class="clickable" vr-button position="0 0 0">
+                    <a-plane width="1.0" height="0.32" color="#ff0055"
+                        material="emissive: #ff0055; emissiveIntensity: 0.45">
+                        <a-text value="[AR] PASSTHROUGH" align="center" color="#ffffff" scale="0.45 0.45 0.45"
+                            position="0 0 0.02"></a-text>
+                    </a-plane>
+                </a-entity>
+
+                <!-- Reset -->
+                <a-entity id="btn-reset-sim" class="clickable" vr-button position="1.1 0 0">
+                    <a-plane width="0.85" height="0.32" color="#4a5568"
+                        material="emissive: #4a5568; emissiveIntensity: 0.4">
+                        <a-text value="RESET SIM" align="center" color="#ffffff" scale="0.4 0.4 0.4"
+                            position="0 0 0.02"></a-text>
+                    </a-plane>
+                </a-entity>
+            </a-entity>
+
+            <!-- PRIMARY 4-STEP ACTION BUTTONS -->
+            <a-entity position="0 -0.32 0">
+                <!-- 1. SOS Dispatch -->
+                <a-entity id="btn-sos-call" class="clickable" vr-button position="-1.55 0 0">
+                    <a-plane width="0.95" height="0.36" color="#ff0055"
+                        material="emissive: #ff0055; emissiveIntensity: 0.6">
+                        <a-text value="1. DISPATCH\n112 / 911 SOS" align="center" color="#ffffff" scale="0.38 0.38 0.38"
+                            position="0 0 0.02"></a-text>
+                    </a-plane>
+                </a-entity>
+
+                <!-- 2. Check Vitals -->
+                <a-entity id="btn-check-vitals" class="clickable" vr-button position="-0.52 0 0">
+                    <a-plane width="0.95" height="0.36" color="#00f5d4"
+                        material="emissive: #00f5d4; emissiveIntensity: 0.4">
+                        <a-text value="2. SCAN\nVITALS & PULSE" align="center" color="#050a14" scale="0.38 0.38 0.38"
+                            position="0 0 0.02"></a-text>
+                    </a-plane>
+                </a-entity>
+
+                <!-- 3. Start CPR -->
+                <a-entity id="btn-start-cpr" class="clickable" vr-button position="0.52 0 0">
+                    <a-plane width="0.95" height="0.36" color="#ffb703"
+                        material="emissive: #ffb703; emissiveIntensity: 0.5">
+                        <a-text value="3. START CPR\nMETRONOME" align="center" color="#050a14" scale="0.38 0.38 0.38"
+                            position="0 0 0.02"></a-text>
+                    </a-plane>
+                </a-entity>
+
+                <!-- 4. Apply AED -->
+                <a-entity id="btn-apply-aed" class="clickable" vr-button position="1.55 0 0">
+                    <a-plane width="0.95" height="0.36" color="#7209b7"
+                        material="emissive: #7209b7; emissiveIntensity: 0.5">
+                        <a-text value="4. DEPLOY AED\nDEFIBRILLATOR" align="center" color="#ffffff"
+                            scale="0.38 0.38 0.38" position="0 0 0.02"></a-text>
+                    </a-plane>
+                </a-entity>
+            </a-entity>
+        </a-entity>
+
+        <!-- =========================================================================
+             HOLOGRAPHIC VITALS MONITOR HUD (Left Wing)
+             ========================================================================= -->
+        <a-entity id="vital-hud-card" visible="false" position="-2.3 1.6 -2.2" rotation="0 25 0">
+            <a-plane width="1.7" height="1.45" color="#0a192f"
+                material="opacity: 0.92; transparent: true; metalness: 0.85">
+                <a-text value="TELEMETRY VITALS" align="center" color="#00f5d4" scale="0.55 0.55 0.55"
+                    position="0 0.56 0.02"></a-text>
+
+                <a-text id="vital-pulse" value="HEART RATE: -- BPM" align="left" color="#ffffff" scale="0.38 0.38 0.38"
+                    position="-0.75 0.32 0.02"></a-text>
+                <a-text id="vital-bp" value="BLOOD PRESSURE: --/-- mmHg" align="left" color="#ffffff"
+                    scale="0.38 0.38 0.38" position="-0.75 0.15 0.02"></a-text>
+                <a-text id="vital-spo2" value="SpO2: --%" align="left" color="#ffffff" scale="0.38 0.38 0.38"
+                    position="-0.75 -0.02 0.02"></a-text>
+                <a-text id="vital-resp" value="RESPIRATION: AGONAL GASPING" align="left" color="#ffb703"
+                    scale="0.35 0.35 0.35" position="-0.75 -0.18 0.02"></a-text>
+
+                <a-plane position="0 -0.46 0.02" width="1.55" height="0.25" color="#1c2541">
+                    <a-text id="vital-status-badge" value="[!] SCANNING CASUALTY..." align="center" color="#ffb703"
+                        scale="0.36 0.36 0.36" position="0 0 0.01"></a-text>
                 </a-plane>
-            </a-entity>
-        </a-entity>
-
-        <!-- 2. Blood Network -->
-        <!-- Pulsing animation to represent a heartbeat -->
-        <a-entity position="0 1.5 -5" class="clickable" interactive-node="color: #e63946; hoverColor: #00ffcc" 
-                  geometry="primitive: sphere; radius: 0.4" material="color: #e63946; emissive: #e63946; emissiveIntensity: 0.5" 
-                  animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; dur: 800; loop: true; easing: easeInOutSine">
-            
-            <a-text value="BLOOD NETWORK" position="0 1 0" align="center" color="#ffffff" scale="1.2 1.2 1.2" side="double"></a-text>
-            <a-plane class="details" visible="false" position="0 -1.2 0" width="2" height="0.8" color="#1d3557" material="opacity: 0.9">
-                <a-text value="Emergency blood matching.\nReal-time alert network." align="center" scale="0.7 0.7 0.7" color="#ffffff"></a-text>
             </a-plane>
-            
-            <!-- Orbiting element around the blood sphere -->
-            <a-entity animation="property: rotation; to: 0 360 0; dur: 2000; loop: true; easing: linear">
-                <a-sphere position="0.8 0 0" radius="0.08" color="#00ffcc" material="emissive: #00ffcc; emissiveIntensity: 2"></a-sphere>
-            </a-entity>
         </a-entity>
 
-        <!-- 3. Emergency Response -->
-        <a-entity position="2.5 1.5 -4" class="clickable" interactive-node="color: #e63946; hoverColor: #00ffcc" 
-                  geometry="primitive: dodecahedron; radius: 0.5" material="color: #e63946; emissive: #e63946; emissiveIntensity: 0.5" 
-                  animation="property: rotation; to: 360 360 0; dur: 8000; loop: true; easing: linear">
-            
-            <a-entity animation="property: rotation; to: -360 -360 0; dur: 8000; loop: true; easing: linear">
-                <a-text value="EMERGENCY" position="0 1 0" align="center" color="#ffffff" scale="1.2 1.2 1.2" side="double"></a-text>
-                <a-plane class="details" visible="false" position="0 -1.2 0" width="2" height="0.8" color="#1d3557" material="opacity: 0.9">
-                    <a-text value="24/7 Crisis Response.\nFind immediate matches." align="center" scale="0.7 0.7 0.7" color="#ffffff"></a-text>
+        <!-- =========================================================================
+             LIVE SOS EMERGENCY BROADCAST PANEL (Right Wing)
+             ========================================================================= -->
+        <a-entity id="sos-status-panel" visible="false" position="2.3 1.6 -2.2" rotation="0 -25 0">
+            <a-plane width="1.7" height="1.45" color="#0a192f"
+                material="opacity: 0.92; transparent: true; metalness: 0.85">
+                <a-text value="EMS 112 / 911 DISPATCH" align="center" color="#ff0055" scale="0.55 0.55 0.55"
+                    position="0 0.56 0.02"></a-text>
+
+                <a-text value="GPS LAT: 28.6139° N" align="left" color="#ffffff" scale="0.36 0.36 0.36"
+                    position="-0.75 0.32 0.02"></a-text>
+                <a-text value="GPS LON: 77.2090° E" align="left" color="#ffffff" scale="0.36 0.36 0.36"
+                    position="-0.75 0.16 0.02"></a-text>
+                <a-text value="TRIAGE TICKET: #LB-8849-CRIT" align="left" color="#00f5d4" scale="0.35 0.35 0.35"
+                    position="-0.75 0.0 0.02"></a-text>
+                <a-text value="UNIT: AMBULANCE #14 (ALS)" align="left" color="#ffffff" scale="0.36 0.36 0.36"
+                    position="-0.75 -0.16 0.02"></a-text>
+
+                <a-plane position="0 -0.46 0.02" width="1.55" height="0.25" color="#ff0055" material="opacity: 0.2">
+                    <a-text value="ESTIMATED ARRIVAL: 3.8 MIN" align="center" color="#00f5d4" scale="0.42 0.42 0.42"
+                        position="0 0 0.01"></a-text>
                 </a-plane>
-            </a-entity>
+            </a-plane>
         </a-entity>
 
+        <!-- =========================================================================
+             CPR INTERACTIVE TRAINER HUD & COMPRESSION PROGRESS
+             ========================================================================= -->
+        <a-entity id="cpr-interactive-panel" visible="false" position="0 1.25 -1.6" rotation="-20 0 0">
+            <a-plane width="1.8" height="0.95" color="#0a192f" material="opacity: 0.94; transparent: true">
+                <a-text value="CPR RHYTHM COACH (110 BPM)" align="center" color="#ffb703" scale="0.5 0.5 0.5"
+                    position="0 0.36 0.02"></a-text>
+
+                <!-- Metronome Flashing Light -->
+                <a-sphere id="metronome-indicator" position="0 0.2 0.03" radius="0.065" color="#ff0055"
+                    material="emissive: #ff0055; emissiveIntensity: 0.4"></a-sphere>
+
+                <a-text id="cpr-counter-text" value="COMPRESSIONS: 0 / 30" align="center" color="#ffffff"
+                    scale="0.45 0.45 0.45" position="0 0.06 0.02"></a-text>
+
+                <!-- Progress Bar -->
+                <a-plane position="0 -0.1 0.02" width="1.4" height="0.1" color="#1c2541">
+                    <a-plane id="cpr-progress-bar" position="-0.7 0 0.01" scale="0.01 0.1 1" width="1.4" height="0.1"
+                        color="#00f5d4"></a-plane>
+                </a-plane>
+
+                <a-text id="cpr-quality-text" value="TAP BUTTON OR CHEST TARGET TO PUSH" align="center"
+                    color="#00f5d4" scale="0.32 0.32 0.32" position="0 -0.23 0.02"></a-text>
+
+                <!-- Large Push Chest Action Button -->
+                <a-entity id="btn-cpr-compress" class="clickable" vr-button position="0 -0.54 0">
+                    <a-plane width="1.45" height="0.28" color="#ff0055"
+                        material="emissive: #ff0055; emissiveIntensity: 0.7">
+                        <a-text value="► PUSH CHEST (COMPRESS) ◄" align="center" color="#ffffff" scale="0.45 0.45 0.45"
+                            position="0 0 0.02"></a-text>
+                    </a-plane>
+                </a-entity>
+            </a-plane>
+        </a-entity>
+
+        <!-- =========================================================================
+             AED STATUS & DEFIBRILLATION HUD
+             ========================================================================= -->
+        <a-entity id="aed-status-panel" visible="false" position="0 2.8 -2.4">
+            <a-plane width="1.9" height="0.58" color="#7209b7"
+                material="opacity: 0.95; emissive: #7209b7; emissiveIntensity: 0.55">
+                <a-text value="AED SHOCK DELIVERED (200 JOULES)" align="center" color="#ffffff" scale="0.55 0.55 0.55"
+                    position="0 0.14 0.02"></a-text>
+                <a-text value="NORMAL SINUS RHYTHM DETECTED | ROSC ACHIEVED" align="center" color="#00f5d4"
+                    scale="0.38 0.38 0.38" position="0 -0.12 0.02"></a-text>
+            </a-plane>
+        </a-entity>
+
+        <!-- Lighting Rig -->
+        <a-light type="ambient" color="#2b2d42" intensity="0.85"></a-light>
+        <a-light type="directional" color="#ffffff" intensity="0.65" position="2 6 2"></a-light>
     </a-scene>
 </body>
+
 </html>
